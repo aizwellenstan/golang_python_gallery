@@ -1,0 +1,417 @@
+directive @isAuthorized on FIELD_DEFINITION
+directive @isAdmin on FIELD_DEFINITION
+
+scalar Time
+scalar Any
+
+enum OrderDirection {
+  ASC
+  DESC
+}
+
+input Pagination {
+  limit: Int
+  offset: Int
+}
+
+input Ordering {
+  order_by: String
+  order_direction: OrderDirection
+}
+
+"Credentials used to identify and authenticate a share token"
+input ShareTokenCredentials {
+  token: String!
+  password: String
+}
+
+type Query {
+  siteInfo: SiteInfo!
+
+  "List of registered users, must be admin to call"
+  user(order: Ordering, paginate: Pagination): [User!]! @isAdmin
+  "Information about the currently logged in user"
+  myUser: User! @isAuthorized
+
+  myUserPreferences: UserPreferences! @isAuthorized
+
+  "List of albums owned by the logged in user."
+  myAlbums(
+    order: Ordering,
+    paginate: Pagination
+    "Return only albums from the root directory of the user"
+    onlyRoot: Boolean
+    "Return also albums with no media directly in them"
+    showEmpty: Boolean
+    "Show only albums having favorites"
+    onlyWithFavorites: Boolean
+  ): [Album!]! @isAuthorized
+  """
+  Get album by id, user must own the album or be admin
+  If valid tokenCredentials are provided, the album may be retrived without further authentication
+  """
+  album(id: ID!, tokenCredentials: ShareTokenCredentials): Album!
+
+  "List of media owned by the logged in user"
+  myMedia(order: Ordering, paginate: Pagination): [Media!]! @isAuthorized
+  """
+  Get media by id, user must own the media or be admin.
+  If valid tokenCredentials are provided, the media may be retrived without further authentication
+  """
+  media(id: ID!, tokenCredentials: ShareTokenCredentials): Media!
+
+  "Get a list of media by their ids, user must own the media or be admin"
+  mediaList(ids: [ID!]!): [Media!]!
+
+  """
+  Get a list of media, ordered first by day, then by album if multiple media was found for the same day.
+  """
+  myTimeline(
+    paginate: Pagination,
+    onlyFavorites: Boolean,
+    "Only fetch media that is older than this date"
+    fromDate: Time
+  ): [Media!]! @isAuthorized
+
+  "Get media owned by the logged in user, returned in GeoJson format"
+  myMediaGeoJson: Any! @isAuthorized
+  "Get the mapbox api token, returns null if mapbox is not enabled"
+  mapboxToken: String
+
+  shareToken(credentials: ShareTokenCredentials!): ShareToken!
+  shareTokenValidatePassword(credentials: ShareTokenCredentials!): Boolean!
+
+  search(query: String!, limitMedia: Int, limitAlbums: Int): SearchResult!
+
+  myFaceGroups(paginate: Pagination): [FaceGroup!]! @isAuthorized
+  faceGroup(id: ID!): FaceGroup! @isAuthorized
+}
+
+type Mutation {
+  authorizeUser(username: String!, password: String!): AuthorizeResult!
+
+  "Registers the initial user, can only be called if initialSetup from SiteInfo is true"
+  initialSetupWizard(
+    username: String!
+    password: String!
+    rootPath: String!
+  ): AuthorizeResult
+
+  "Scan all users for new media"
+  scanAll: ScannerResult! @isAdmin
+  "Scan a single user for new media"
+  scanUser(userId: ID!): ScannerResult! @isAdmin
+
+  "Generate share token for album"
+  shareAlbum(albumId: ID!, expire: Time, password: String): ShareToken! @isAuthorized
+  "Generate share token for media"
+  shareMedia(mediaId: ID!, expire: Time, password: String): ShareToken! @isAuthorized
+  "Delete a share token by it's token value"
+  deleteShareToken(token: String!): ShareToken! @isAuthorized
+  "Set a password for a token, if null is passed for the password argument, the password will be cleared"
+  protectShareToken(token: String!, password: String): ShareToken! @isAuthorized
+
+  "Mark or unmark a media as being a favorite"
+  favoriteMedia(mediaId: ID!, favorite: Boolean!): Media! @isAuthorized
+
+  updateUser(
+    id: ID!
+    username: String
+    password: String
+    admin: Boolean
+  ): User! @isAdmin
+  createUser(
+    username: String!
+    password: String
+    admin: Boolean!
+  ): User! @isAdmin
+  deleteUser(id: ID!): User! @isAdmin
+
+  "Add a root path from where to look for media for the given user"
+  userAddRootPath(id: ID!, rootPath: String!): Album @isAdmin
+  userRemoveRootAlbum(userId: ID!, albumId: ID!): Album @isAdmin
+
+  """
+  Set how often, in seconds, the server should automatically scan for new media,
+  a value of 0 will disable periodic scans
+  """
+  setPeriodicScanInterval(interval: Int!): Int! @isAdmin
+
+  "Set max number of concurrent scanner jobs running at once"
+  setScannerConcurrentWorkers(workers: Int!): Int! @isAdmin
+
+  changeUserPreferences(language: String): UserPreferences! @isAuthorized
+
+  "Reset the assigned cover photo for an album"
+  resetAlbumCover(albumID: ID!): Album! @isAuthorized
+  "Assign a cover photo to an album"
+  setAlbumCover(coverID: ID!): Album! @isAuthorized
+
+  "Assign a label to a face group, set label to null to remove the current one"
+  setFaceGroupLabel(faceGroupID: ID!, label: String): FaceGroup! @isAuthorized
+  "Merge two face groups into a single one, all ImageFaces from source will be moved to destination"
+  combineFaceGroups(destinationFaceGroupID: ID!, sourceFaceGroupID: ID!): FaceGroup! @isAuthorized
+  "Move a list of ImageFaces to another face group"
+  moveImageFaces(imageFaceIDs: [ID!]!, destinationFaceGroupID: ID!): FaceGroup! @isAuthorized
+  "Check all unlabeled faces to see if they match a labeled FaceGroup, and move them if they match"
+  recognizeUnlabeledFaces: [ImageFace!]! @isAuthorized
+  "Move a list of ImageFaces to a new face group"
+  detachImageFaces(imageFaceIDs: [ID!]!): FaceGroup! @isAuthorized
+}
+
+type Subscription {
+  notification: Notification!
+}
+
+enum NotificationType {
+  Message
+  Progress
+  "Close a notification with a given key"
+  Close
+}
+
+type Notification {
+  key: String!
+  type: NotificationType!
+  header: String!
+  content: String!
+  progress: Float
+  positive: Boolean!
+  negative: Boolean!
+  "Time in milliseconds before the notification will close"
+  timeout: Int
+}
+
+type AuthorizeResult {
+  success: Boolean!
+  status: String!
+  token: String
+}
+
+type ScannerResult {
+  finished: Boolean!
+  success: Boolean!
+  progress: Float
+  message: String
+}
+
+"A token used to publicly access an album or media"
+type ShareToken {
+  id: ID!
+  token: String!
+  "The user who created the token"
+  owner: User!
+  "Optional expire date"
+  expire: Time
+  "Whether or not a password is needed to access the share"
+  hasPassword: Boolean!
+
+  "The album this token shares"
+  album: Album
+  "The media this token shares"
+  media: Media
+}
+
+"General information about the site"
+type SiteInfo {
+  "Whether or not the initial setup wizard should be shown"
+  initialSetup: Boolean!
+  "Whether or not face detection is enabled and working"
+  faceDetectionEnabled: Boolean!
+  "How often automatic scans should be initiated in seconds"
+  periodicScanInterval: Int! @isAdmin
+  "How many max concurrent scanner jobs that should run at once"
+  concurrentWorkers: Int! @isAdmin
+}
+
+type User {
+  id: ID!
+  username: String!
+  #albums: [Album]
+  # rootPath: String! @isAdmin
+  "All albums owned by this user"
+  albums: [Album!]! @isAdmin
+  "Top level albums owned by this user"
+  rootAlbums: [Album!]! @isAdmin
+  admin: Boolean!
+  #shareTokens: [ShareToken]
+}
+
+enum LanguageTranslation {
+  English,
+  French,
+  Italian,
+  Swedish,
+  Danish,
+  Spanish,
+  Polish,
+  German,
+  Russian,
+  TraditionalChinese,
+  SimplifiedChinese,
+  Portuguese
+}
+
+type UserPreferences {
+  id: ID!
+  language: LanguageTranslation
+}
+
+type Album {
+  id: ID!
+  title: String!
+
+  "The media inside this album"
+  media(
+    order: Ordering,
+    paginate: Pagination
+    "Return only the favorited media"
+    onlyFavorites: Boolean
+  ): [Media!]!
+
+  "The albums contained in this album"
+  subAlbums(
+    order: Ordering,
+    paginate: Pagination
+  ): [Album!]!
+
+  "The album which contains this album"
+  parentAlbum: Album
+  "The user who owns this album"
+  owner: User!
+  "The path on the filesystem of the server, where this album is located"
+  filePath: String!
+  "An image in this album used for previewing this album"
+  thumbnail: Media
+  path: [Album!]!
+
+  shares: [ShareToken!]!
+}
+
+type MediaURL {
+  "URL for previewing the image"
+  url: String!
+  "Width of the image in pixels"
+  width: Int!
+  "Height of the image in pixels"
+  height: Int!
+  "The file size of the resource in bytes"
+  fileSize: Int!
+}
+
+type MediaDownload {
+  title: String!
+  mediaUrl: MediaURL!
+}
+
+enum MediaType {
+  Photo
+  Video
+}
+
+type Media {
+  id: ID!
+  title: String!
+  "Local filepath for the media"
+  path: String!
+  "URL to display the media in a smaller resolution"
+  thumbnail: MediaURL
+  "URL to display the photo in full resolution, will be null for videos"
+  highRes: MediaURL
+  "URL to get the video in a web format that can be played in the browser, will be null for photos"
+  videoWeb: MediaURL
+  "The album that holds the media"
+  album: Album!
+  exif: MediaEXIF
+  videoMetadata: VideoMetadata
+  favorite: Boolean!
+  type: MediaType!
+  "The date the image was shot or the date it was imported as a fallback"
+  date: Time!
+
+  shares: [ShareToken!]!
+  downloads: [MediaDownload!]!
+
+  faces: [ImageFace!]!
+}
+
+"EXIF metadata from the camera"
+type MediaEXIF {
+  id: ID!
+  media: Media!
+  "The model name of the camera"
+  camera: String
+  "The maker of the camera"
+  maker: String
+  "The name of the lens"
+  lens: String
+  dateShot: Time
+  "The exposure time of the image"
+  exposure: Float
+  "The aperature stops of the image"
+  aperture: Float
+  "The ISO setting of the image"
+  iso: Int
+  "The focal length of the lens, when the image was taken"
+  focalLength: Float
+  "A formatted description of the flash settings, when the image was taken"
+  flash: Int
+  "An index describing the mode for adjusting the exposure of the image"
+  exposureProgram: Int
+  "GPS coordinates of where the image was taken"
+  coordinates: Coordinates
+}
+
+type Coordinates {
+  "GPS latitude in degrees"
+  latitude: Float!
+  "GPS longitude in degrees"
+  longitude: Float!
+}
+
+type VideoMetadata {
+  id: ID!
+  media: Media!
+  width: Int!
+  height: Int!
+  duration: Float!
+  codec: String
+  framerate: Float
+  bitrate: String
+  colorProfile: String
+  audio: String
+}
+
+type SearchResult {
+  query: String!
+  albums: [Album!]!
+  media: [Media!]!
+}
+
+type TimelineGroup {
+  album: Album!
+  media: [Media!]!
+  mediaTotal: Int!
+  date: Time!
+}
+
+type FaceGroup {
+  id: ID!
+  label: String
+  imageFaces(paginate: Pagination): [ImageFace!]!
+  imageFaceCount: Int!
+}
+
+type ImageFace {
+  id: ID!
+  media: Media!
+  rectangle: FaceRectangle!
+  faceGroup: FaceGroup!
+}
+
+type FaceRectangle {
+  minX: Float!
+  maxX: Float!
+  minY: Float!
+  maxY: Float!
+}

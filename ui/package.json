@@ -1,0 +1,106 @@
+{
+  "name": "photoview-ui",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/photoview/photoview.git",
+    "directory": "ui"
+  },
+  "license": "GPL-3.0",
+  "description": "UI app for Photoview",
+  "dependencies": {
+    "@apollo/client": "^3.3.21",
+    "@babel/preset-typescript": "^7.14.5",
+    "@craco/craco": "^6.2.0",
+    "@headlessui/react": "^1.4.1",
+    "@react-aria/focus": "^3.4.0",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@types/geojson": "^7946.0.8",
+    "@types/jest": "^26.0.24",
+    "@types/mapbox-gl": "^2.3.3",
+    "@types/react": "^17.0.14",
+    "@types/react-dom": "^17.0.9",
+    "@types/react-helmet": "^6.1.2",
+    "@types/react-router-dom": "^5.1.8",
+    "@types/styled-components": "^5.1.11",
+    "@types/url-join": "^4.0.1",
+    "autoprefixer": "^9.8.6",
+    "babel-plugin-graphql-tag": "^3.3.0",
+    "classnames": "^2.3.1",
+    "connect-history-api-fallback": "^1.6.0",
+    "copy-to-clipboard": "^3.3.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-jest-dom": "^3.9.0",
+    "fs-extra": "^10.0.0",
+    "i18next": "^20.3.2",
+    "mapbox-gl": "^2.3.1",
+    "postcss": "^7.0.36",
+    "prettier": "^2.3.2",
+    "prop-types": "^15.7.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-helmet": "^6.1.0",
+    "react-hook-form": "^7.11.0",
+    "react-i18next": "^11.11.1",
+    "react-router-dom": "^5.2.0",
+    "react-router-prop-types": "^1.0.5",
+    "react-scripts": "^4.0.3",
+    "react-spring": "^8.0.27",
+    "react-test-renderer": "^17.0.2",
+    "styled-components": "^5.3.0",
+    "subscriptions-transport-ws": "^0.9.19",
+    "tailwind-override": "^0.2.3",
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.4",
+    "typescript": "^4.3.5",
+    "url-join": "^4.0.1"
+  },
+  "scripts": {
+    "start": "BROWSER=none PORT=1234 craco start",
+    "build": "craco build",
+    "test": "npm run lint && npm run jest -- --watchAll=false",
+    "test:ci": "npm run lint && npm run jest:ci",
+    "lint": "npm run lint:types & npm run lint:eslint",
+    "lint:eslint": "eslint ./src --max-warnings 0 --cache --config .eslintrc.js",
+    "lint:types": "tsc --noemit",
+    "jest": "craco test --setupFilesAfterEnv ./testing/setupTests.ts",
+    "jest:ci": "CI=true craco test --setupFilesAfterEnv ./testing/setupTests.ts --verbose --ci --coverage",
+    "genSchemaTypes": "apollo client:codegen --target=typescript --globalTypesFile=src/__generated__/globalTypes.ts && prettier --write */**/__generated__/*.ts",
+    "extractTranslations": "i18next -c i18next-parser.config.js",
+    "prepare": "(cd .. && npx husky install)"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.14.1",
+    "@testing-library/react": "^12.0.0",
+    "@testing-library/user-event": "^13.1.9",
+    "apollo": "2.33.4",
+    "apollo-language-server": "1.26.3",
+    "husky": "^6.0.0",
+    "i18next-parser": "^4.2.0",
+    "lint-staged": "^11.0.1",
+    "tsc-files": "^1.1.2"
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true,
+    "arrowParens": "avoid"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,json,css,md,graphql}": "prettier --write",
+    "*.{js,ts,tsx}": "eslint --cache --fix --max-warnings 0",
+    "*.{ts,tsx}": "tsc-files --noEmit"
+  },
+  "browserslist": {
+    "production": [
+      "defaults",
+      "not ie 11",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

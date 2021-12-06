@@ -1,0 +1,94 @@
+{
+  "albums_page": {
+    "title": "Album"
+  },
+  "general": {
+    "action": {
+      "delete": "Slet",
+      "more": "Mere"
+    },
+    "loading": {
+      "media": "Loader medier",
+      "timeline": "Loader tidslinje"
+    }
+  },
+  "header": {
+    "search": {
+      "result_type": {
+        "photos": "Billeder"
+      }
+    }
+  },
+  "people_page": {
+    "face_group": {
+      "action": {
+        "add_label": "Tilføj navn",
+        "change_label": "Ændre navn",
+        "detach_face": "Løsriv ansigter",
+        "merge_face": "Sammenflet ansigter",
+        "move_faces": "Flyt ansigter"
+      }
+    },
+    "table": {
+      "select_face_group": {
+        "search_faces_placeholder": "Søg ansigter..."
+      },
+      "select_image_faces": {
+        "search_images_placeholder": "Søg billeder..."
+      }
+    },
+    "action_label": {
+      "change_label": null,
+      "merge_face": null,
+      "detach_face": null,
+      "move_faces": null
+    },
+    "modal": {
+      "merge_people_groups": {
+        "description": "Alle billeder fra denne gruppe vil blive flettet sammen med den valgte gruppe",
+        "destination_table": {
+          "title": "Vælg destinationsgruppe"
+        },
+        "title": "Vælg gruppe at flette med"
+      }
+    }
+  },
+  "settings": {
+    "users": {
+      "table": {
+        "column_names": {
+          "admin": "Admin"
+        }
+      }
+    }
+  },
+  "sidebar": {
+    "album": {
+      "title": "Indstillinger for album",
+      "album_cover": null,
+      "cover_photo": "",
+      "reset_cover": null,
+      "set_cover": null
+    },
+    "sharing": {
+      "table_header": "Offentlige delinger"
+    },
+    "download": {
+      "filesize": {
+        "giga_byte_plural": null,
+        "kilo_byte_plural": null,
+        "mega_byte_plural": null,
+        "tera_byte_plural": null
+      }
+    },
+    "media": {
+      "album": "Album"
+    }
+  },
+  "timeline_filter": {
+    "date": {
+      "dropdown_all": null,
+      "label": null
+    }
+  }
+}
