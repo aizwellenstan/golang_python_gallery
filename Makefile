@@ -8,7 +8,7 @@ help:
 
 
 run:
-	@echo "Start Container Use default setting (listen web on 8080)"
+	@echo "Start Container Use default setting (listen web on 80)"
 	@docker-compose up -d
 	# @docker-compose up -d --build
 
